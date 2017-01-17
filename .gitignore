@@ -6,3 +6,4 @@
 erl_crash.dump
 *.ez
 /machine_probe
+/mix.lock
