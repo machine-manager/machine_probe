@@ -12,10 +12,10 @@ defmodule MachineProbe do
 			thread_count:     cpuinfo.threads,
 			country:          Converge.Util.get_country(),
 			kernel:           get_kernel(),
-			boot_time:        get_boot_time(),
+			boot_time_ms:     get_boot_time_ms(),
 			pending_upgrades: get_pending_upgrades(),
 		}
-		:ok = IO.write(:erlang.term_to_binary(probe_out))
+		:ok = IO.write(Poison.encode!(probe_out))
 	end
 
 	defp get_kernel() do
@@ -30,11 +30,10 @@ defmodule MachineProbe do
 		|> Enum.map(&hd/1)
 	end
 
-	defp get_boot_time() do
+	defp get_boot_time_ms() do
 		now_ms    = :erlang.system_time(:millisecond)
 		{out, 0}  = System.cmd("cat", ["/proc/uptime"])
 		uptime_ms = out |> String.split(" ") |> hd |> String.to_float |> Kernel.*(1000) |> round
-		boot_ms   = now_ms - uptime_ms
-		DateTime.from_unix!(boot_ms, :millisecond)
+		now_ms - uptime_ms
 	end
 end
