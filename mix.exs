@@ -14,6 +14,8 @@ defmodule MachineProbe.Mixfile do
 	end
 
 	defp deps do
-		[{:converge, ">= 0.1.1"}]
+		[
+			{:converge, ">= 0.1.1"},
+		]
 	end
 end
