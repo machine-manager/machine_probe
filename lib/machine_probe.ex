@@ -25,6 +25,8 @@ defmodule MachineProbe do
 
 	# This assumes apt-get update was already run recently.
 	defp get_pending_upgrades() do
+		# Last upgrade may have been interrupted
+		{_,   0} = System.cmd("dpkg", ["--configure", "-a"])
 		{out, 0} = System.cmd("apt-get", ["--simulate", "dist-upgrade"])
 		Regex.scan(~r/^Inst (\S+)/m, out, capture: :all_but_first)
 		|> Enum.map(&hd/1)
