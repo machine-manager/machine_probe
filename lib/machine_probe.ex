@@ -26,11 +26,22 @@ defmodule MachineProbe do
 
 	# This assumes apt-get update was already run recently.
 	defp get_pending_upgrades() do
-		# Last upgrade may have been interrupted
-		{_,   0} = System.cmd("dpkg", ["--configure", "-a"])
+		case get_uid() do
+			0 ->
+				# Last upgrade may have been interrupted
+				{_, 0} = System.cmd("dpkg", ["--configure", "-a"])
+			_ -> nil
+		end
 		{out, 0} = System.cmd("apt-get", ["--simulate", "dist-upgrade"])
 		Regex.scan(~r/^Inst (\S+)/m, out, capture: :all_but_first)
 		|> Enum.map(&hd/1)
+	end
+
+	defp get_uid() do
+		{uid_s, 0} = System.cmd("id", ["-u"])
+		uid_s
+		|> String.trim_trailing
+		|> String.to_integer
 	end
 
 	defp get_boot_time_ms() do
