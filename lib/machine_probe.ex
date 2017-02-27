@@ -7,6 +7,7 @@ defmodule MachineProbe do
 		cpuinfo   = Converge.Util.get_cpuinfo()
 		probe_out = %{
 			ram_mb:           meminfo["MemTotal"] / (1024 * 1024) |> Float.floor |> round,
+			cpu_architecture: cpuinfo.architecture,
 			cpu_model_name:   cpuinfo.model_name,
 			core_count:       cpuinfo.cores,
 			thread_count:     cpuinfo.threads,
