@@ -20,7 +20,7 @@ defmodule MachineProbe do
 	end
 
 	defp get_kernel() do
-		{out, 0} = System.cmd("uname", ["--kernel-name", "--kernel-release"])
+		{out, 0} = System.cmd("uname", ["--kernel-name", "--kernel-release", "--kernel-version"])
 		out |> String.trim_trailing
 	end
 
