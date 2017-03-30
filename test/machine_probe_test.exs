@@ -1,8 +1,11 @@
 defmodule MachineProbeTest do
-  use ExUnit.Case
-  doctest MachineProbe
+	use ExUnit.Case
+	import ExUnit.CaptureIO
 
-  test "the truth" do
-    assert 1 + 1 == 2
-  end
+	test "main" do
+		out = capture_io(fn ->
+			MachineProbe.main([])
+		end)
+		Poison.decode!(out)
+	end
 end

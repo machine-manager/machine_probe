@@ -33,8 +33,16 @@ defmodule MachineProbe do
 			_ -> nil
 		end
 		{out, 0} = System.cmd("apt-get", ["--simulate", "dist-upgrade"])
-		Regex.scan(~r/^Inst (\S+)/m, out, capture: :all_but_first)
-		|> Enum.map(&hd/1)
+		Regex.scan(~r/^Inst (\S+) \[([^\]]+)\] \((\S+) (\S+) \[(\S+)\]\)/m, out, capture: :all_but_first)
+		|> Enum.map(fn [name, old_version, new_version, origin, architecture] ->
+		     %{
+		       name:         name,
+		       old_version:  old_version,
+		       new_version:  new_version,
+		       origin:       origin,
+		       architecture: architecture,
+		     }
+		   end)
 	end
 
 	defp get_uid() do
