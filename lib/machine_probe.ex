@@ -32,17 +32,27 @@ defmodule MachineProbe do
 				{_, 0} = System.cmd("dpkg", ["--configure", "-a"])
 			_ -> nil
 		end
-		{out, 0} = System.cmd("apt-get", ["--simulate", "dist-upgrade"])
-		Regex.scan(~r/^Inst (\S+) \[([^\]]+)\] \((\S+) (\S+) \[(\S+)\]\)/m, out, capture: :all_but_first)
-		|> Enum.map(fn [name, old_version, new_version, origin, architecture] ->
+		{out, 0} = System.cmd("apt-get", ["dist-upgrade", "--simulate", "--no-install-recommends"])
+		inst_lines       = Regex.scan(~r/^Inst /m, out)
+		pending_upgrades = Regex.scan(~r/^Inst (\S+) \[([^\]]+)\] \((\S+) (.*?) \[(\S+)\]\)/m, out, capture: :all_but_first)
+		|> Enum.map(fn [name, old_version, new_version, origins, architecture] ->
 		     %{
 		       name:         name,
 		       old_version:  old_version,
 		       new_version:  new_version,
-		       origin:       origin,
+		       origins:      origins |> String.split(", "),
 		       architecture: architecture,
 		     }
 		   end)
+		if length(pending_upgrades) != length(inst_lines) do
+			raise(RuntimeError,
+				"""
+				Failed to parse all Inst output from `apt-get --simulate dist-upgrade`:
+
+				#{out}
+				""")
+		end
+		pending_upgrades
 	end
 
 	defp get_uid() do
