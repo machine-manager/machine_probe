@@ -33,8 +33,18 @@ defmodule MachineProbe do
 			_ -> nil
 		end
 		{out, 0} = System.cmd("apt-get", ["dist-upgrade", "--simulate", "--no-install-recommends"])
-		inst_lines       = Regex.scan(~r/^Inst /m, out)
-		pending_upgrades = Regex.scan(~r/^Inst (\S+) \[([^\]]+)\] \((\S+) (.*?) \[(\S+)\]\)/m, out, capture: :all_but_first)
+		inst_lines           = Regex.scan(~r/^Inst /m, out)
+		# These lack an [oldversion]
+		pending_new_packages = Regex.scan(~r/^Inst (\S+) \((\S+) (.*?) \[(\S+)\]\)/m, out, capture: :all_but_first)
+		|> Enum.map(fn [name, new_version, origins, architecture] ->
+		     %{
+		       name:         name,
+		       new_version:  new_version,
+		       origins:      origins |> String.split(", "),
+		       architecture: architecture,
+		     }
+		   end)
+		pending_upgrades     = Regex.scan(~r/^Inst (\S+) \[([^\]]+)\] \((\S+) (.*?) \[(\S+)\]\)/m, out, capture: :all_but_first)
 		|> Enum.map(fn [name, old_version, new_version, origins, architecture] ->
 		     %{
 		       name:         name,
@@ -44,7 +54,7 @@ defmodule MachineProbe do
 		       architecture: architecture,
 		     }
 		   end)
-		if length(pending_upgrades) != length(inst_lines) do
+		if length(pending_upgrades) + length(pending_new_packages) != length(inst_lines) do
 			raise(RuntimeError,
 				"""
 				Failed to parse all Inst output from `apt-get --simulate dist-upgrade`:
