@@ -15,6 +15,7 @@ defmodule MachineProbe.Mixfile do
 
 	defp deps do
 		[
+			{:gears,    ">= 0.1.0"},
 			{:converge, ">= 0.1.1"},
 			{:poison,   ">= 3.1.0"},
 		]

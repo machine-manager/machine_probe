@@ -1,3 +1,5 @@
+alias Gears.StringUtil
+
 defmodule MachineProbe do
 	@doc """
 	Probes a machine and outputs the data as a binary term to stdout.
@@ -15,6 +17,7 @@ defmodule MachineProbe do
 			kernel:           get_kernel(),
 			boot_time_ms:     get_boot_time_ms(),
 			pending_upgrades: get_pending_upgrades(),
+			time_offset:      get_time_offset(),
 		}
 		:ok = IO.write(Poison.encode!(probe_out))
 	end
@@ -77,5 +80,20 @@ defmodule MachineProbe do
 		{out, 0}  = System.cmd("cat", ["/proc/uptime"])
 		uptime_ms = out |> String.split(" ") |> hd |> String.to_float |> Kernel.*(1000) |> round
 		now_ms - uptime_ms
+	end
+
+	defp get_time_offset() do
+		{out, 0}    = System.cmd("chronyc", ["tracking"])
+		# e.g. "System time     : 0.001385530 seconds slow of NTP time"
+		line        = out    |> StringUtil.grep(~r/^System time +: /) |> hd
+		[_, string] = line   |> String.split(" : ", parts: 2)
+		offset_s    = string |> String.split(" ") |> hd
+		offset_s    = cond do
+			string |> String.ends_with?(" seconds slow of NTP time") -> "-" <> offset_s
+			string |> String.ends_with?(" seconds fast of NTP time") -> offset_s
+			true ->
+				raise(RuntimeError, "Unexpected line from `chronyc tracking`: #{inspect line}")
+		end
+		offset_s
 	end
 end
