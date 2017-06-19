@@ -83,17 +83,20 @@ defmodule MachineProbe do
 	end
 
 	defp get_time_offset() do
-		{out, 0}    = System.cmd("chronyc", ["tracking"])
-		# e.g. "System time     : 0.001385530 seconds slow of NTP time"
-		line        = out    |> StringUtil.grep(~r/^System time +: /) |> hd
-		[_, string] = line   |> String.split(" : ", parts: 2)
-		offset_s    = string |> String.split(" ") |> hd
-		offset_s    = cond do
-			string |> String.ends_with?(" seconds slow of NTP time") -> "-" <> offset_s
-			string |> String.ends_with?(" seconds fast of NTP time") -> offset_s
-			true ->
-				raise(RuntimeError, "Unexpected line from `chronyc tracking`: #{inspect line}")
+		case System.cmd("chronyc", ["tracking"]) do
+			{out, 0} ->
+				# e.g. "System time     : 0.001385530 seconds slow of NTP time"
+				line        = out    |> StringUtil.grep(~r/^System time +: /) |> hd
+				[_, string] = line   |> String.split(" : ", parts: 2)
+				offset_s    = string |> String.split(" ") |> hd
+				offset_s    = cond do
+					string |> String.ends_with?(" seconds slow of NTP time") -> "-" <> offset_s
+					string |> String.ends_with?(" seconds fast of NTP time") -> offset_s
+					true ->
+						raise(RuntimeError, "Unexpected line from `chronyc tracking`: #{inspect line}")
+				end
+				offset_s
+			{_, _} -> nil
 		end
-		offset_s
 	end
 end
