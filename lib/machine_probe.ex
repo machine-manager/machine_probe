@@ -32,7 +32,7 @@ defmodule MachineProbe do
 		case get_uid() do
 			0 ->
 				# Last upgrade may have been interrupted
-				{_, 0} = System.cmd("dpkg", ["--configure", "-a"], env: %{"DEBIAN_FRONTEND" => "noninteractive"})
+				{_, 0} = System.cmd("dpkg", ["--configure", "-a"])
 			_ -> nil
 		end
 		{out, 0} = System.cmd("apt-get", ["dist-upgrade", "--simulate", "--no-install-recommends"])
