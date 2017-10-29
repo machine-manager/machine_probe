@@ -13,7 +13,6 @@ defmodule MachineProbe do
 			cpu_model_name:   cpuinfo.model_name,
 			core_count:       cpuinfo.cores,
 			thread_count:     cpuinfo.threads,
-			country:          Converge.Util.get_country(),
 			kernel:           get_kernel(),
 			boot_time_ms:     get_boot_time_ms(),
 			pending_upgrades: get_pending_upgrades(),
