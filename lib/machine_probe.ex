@@ -1,12 +1,13 @@
 alias Gears.StringUtil
+alias Converge.Util
 
 defmodule MachineProbe do
 	@doc """
 	Probes a machine and outputs the data as a binary term to stdout.
 	"""
 	def main(_argv) do
-		meminfo   = Converge.Util.get_meminfo()
-		cpuinfo   = Converge.Util.get_cpuinfo()
+		meminfo   = Util.get_meminfo()
+		cpuinfo   = Util.get_cpuinfo()
 		probe_out = %{
 			ram_mb:           meminfo["MemTotal"] / (1024 * 1024) |> Float.floor |> round,
 			cpu_architecture: cpuinfo.architecture,
@@ -15,7 +16,7 @@ defmodule MachineProbe do
 			thread_count:     cpuinfo.threads,
 			kernel:           get_kernel(),
 			boot_time_ms:     get_boot_time_ms(),
-			pending_upgrades: get_pending_upgrades(),
+			pending_upgrades: if get_uid() == 0 do get_pending_upgrades() end,
 			time_offset:      get_time_offset(),
 		}
 		:ok = IO.write(Poison.encode!(probe_out))
@@ -26,14 +27,11 @@ defmodule MachineProbe do
 		String.trim_trailing(out)
 	end
 
-	# This assumes apt-get update was already run recently.
+	# Requires root.
 	defp get_pending_upgrades() do
-		case get_uid() do
-			0 ->
-				# Last upgrade may have been interrupted
-				{_, 0} = System.cmd("dpkg", ["--configure", "-a"])
-			_ -> nil
-		end
+		Util.wait_for_apt_lock()
+		Util.update_package_index()
+		Util.dpkg_configure_pending()
 		{out, 0} = System.cmd("apt-get", ["dist-upgrade", "--simulate", "--no-install-recommends"])
 		inst_lines           = Regex.scan(~r/^Inst /m, out)
 		# These lack an [oldversion]
