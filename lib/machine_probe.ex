@@ -23,7 +23,7 @@ defmodule MachineProbe do
 
 	defp get_kernel() do
 		{out, 0} = System.cmd("uname", ["--kernel-name", "--kernel-release", "--kernel-version"])
-		out |> String.trim_trailing
+		String.trim_trailing(out)
 	end
 
 	# This assumes apt-get update was already run recently.
@@ -42,7 +42,7 @@ defmodule MachineProbe do
 		     %{
 		       name:         name,
 		       new_version:  new_version,
-		       origins:      origins |> String.split(", "),
+		       origins:      String.split(origins, ", "),
 		       architecture: architecture,
 		     }
 		   end)
@@ -52,7 +52,7 @@ defmodule MachineProbe do
 		       name:         name,
 		       old_version:  old_version,
 		       new_version:  new_version,
-		       origins:      origins |> String.split(", "),
+		       origins:      String.split(origins, ", "),
 		       architecture: architecture,
 		     }
 		   end)
@@ -89,8 +89,8 @@ defmodule MachineProbe do
 				[_, string] = line   |> String.split(" : ", parts: 2)
 				offset_s    = string |> String.split(" ") |> hd
 				offset_s    = cond do
-					string |> String.ends_with?(" seconds slow of NTP time") -> "-" <> offset_s
-					string |> String.ends_with?(" seconds fast of NTP time") -> offset_s
+					String.ends_with?(string, " seconds slow of NTP time") -> "-" <> offset_s
+					String.ends_with?(string, " seconds fast of NTP time") -> offset_s
 					true ->
 						raise(RuntimeError, "Unexpected line from `chronyc tracking`: #{inspect line}")
 				end
