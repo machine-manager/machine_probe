@@ -80,7 +80,12 @@ defmodule MachineProbe do
 	end
 
 	defp get_time_offset() do
-		case System.cmd("chronyc", ["tracking"]) do
+		try do
+			System.cmd("chronyc", ["tracking"])
+		rescue
+			# Raised if chrony is not installed
+			ErlangError -> nil
+		else
 			{out, 0} ->
 				# e.g. "System time     : 0.001385530 seconds slow of NTP time"
 				line        = out    |> StringUtil.grep(~r/^System time +: /) |> hd
