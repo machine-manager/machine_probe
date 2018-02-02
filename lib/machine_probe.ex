@@ -19,7 +19,7 @@ defmodule MachineProbe do
 			pending_upgrades: if get_uid() == 0 do get_pending_upgrades() end,
 			time_offset:      get_time_offset(),
 		}
-		:ok = IO.write(Poison.encode!(probe_out))
+		:ok = IO.write(Jason.encode!(probe_out))
 	end
 
 	defp get_kernel() do

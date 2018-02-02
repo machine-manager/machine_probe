@@ -6,6 +6,6 @@ defmodule MachineProbeTest do
 		out = capture_io(fn ->
 			MachineProbe.main([])
 		end)
-		Poison.decode!(out)
+		Jason.decode!(out)
 	end
 end
